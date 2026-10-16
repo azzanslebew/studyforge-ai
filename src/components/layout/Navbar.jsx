@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { AiStatusBadge } from '../ui/AiStatusBadge';
-import { Flame, Award, Menu, User, BookOpen } from 'lucide-react';
+import { Flame, Award, Menu, User, BookOpen, Settings as SettingsIcon } from 'lucide-react';
 
 export function Navbar({ onToggleMobileSidebar }) {
   const { profile, levelInfo, setOnboardingOpen } = useAuth();
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const location = useLocation();
 
   const isLanding = location.pathname === '/';
@@ -76,19 +77,78 @@ export function Navbar({ onToggleMobileSidebar }) {
               </div>
             </div>
 
-            {/* User Profile Avatar / Trigger */}
-            <button
-              onClick={() => setOnboardingOpen(true)}
-              className="flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-full border border-slate-200 hover:border-brand-300 hover:bg-slate-50 transition-all text-left"
-              title="Klik untuk melihat & ubah preferensi profil"
-            >
-              <div className="w-7 h-7 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold uppercase shadow-sm">
-                {(profile.displayName || 'P').charAt(0)}
-              </div>
-              <span className="text-xs font-medium text-slate-700 hidden sm:inline max-w-[100px] truncate">
-                {profile.displayName || 'Profil'}
-              </span>
-            </button>
+            {/* User Profile Avatar / Trigger with Dropdown Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setProfileMenuOpen(prev => !prev)}
+                className="flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-full border border-slate-200 hover:border-brand-300 hover:bg-slate-50 transition-all text-left"
+                title="Menu Pengguna"
+              >
+                <div className="w-7 h-7 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold uppercase shadow-sm">
+                  {(profile.displayName || 'P').charAt(0)}
+                </div>
+                <span className="text-xs font-medium text-slate-700 hidden sm:inline max-w-[100px] truncate">
+                  {profile.displayName || 'Profil'}
+                </span>
+              </button>
+
+              {/* Profile Dropdown Menu */}
+              {profileMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-30"
+                    onClick={() => setProfileMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-elevated border border-slate-200/90 py-2 z-40 text-xs animate-in fade-in zoom-in-95 duration-150">
+                    {/* User Info Header */}
+                    <div className="px-4 py-3 border-b border-slate-100 space-y-1">
+                      <div className="font-bold text-sm text-slate-900 truncate">
+                        {profile.displayName || 'Pelajar Cerdas'}
+                      </div>
+                      <div className="text-[11px] text-slate-500 truncate">
+                        {profile.university || profile.educationLevel || 'Universitas'}
+                      </div>
+                      <div className="pt-1.5 flex items-center justify-between text-[11px] font-semibold text-brand-700">
+                        <span>Level {levelInfo.level} ({levelInfo.title})</span>
+                        <span className="text-amber-600">🔥 {profile.streak || 1} Hari</span>
+                      </div>
+                    </div>
+
+                    {/* Menu Links */}
+                    <div className="p-1.5 space-y-0.5">
+                      <button
+                        onClick={() => {
+                          setProfileMenuOpen(false);
+                          setOnboardingOpen(true);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-slate-700 hover:bg-brand-50 hover:text-brand-700 transition-colors font-medium"
+                      >
+                        <User className="w-4 h-4 text-brand-600" />
+                        <span>Edit Profil & Gaya Belajar (Pop-up)</span>
+                      </button>
+
+                      <Link
+                        to="/settings"
+                        onClick={() => setProfileMenuOpen(false)}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-slate-700 hover:bg-brand-50 hover:text-brand-700 transition-colors font-medium"
+                      >
+                        <SettingsIcon className="w-4 h-4 text-slate-500" />
+                        <span>Halaman Pengaturan Lengkap</span>
+                      </Link>
+
+                      <Link
+                        to="/analytics"
+                        onClick={() => setProfileMenuOpen(false)}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-slate-700 hover:bg-brand-50 hover:text-brand-700 transition-colors font-medium"
+                      >
+                        <Award className="w-4 h-4 text-amber-500" />
+                        <span>Statistik & Lencana Prestasi</span>
+                      </Link>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </>
         )}
 

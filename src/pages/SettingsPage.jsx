@@ -29,6 +29,8 @@ export function SettingsPage() {
   const [displayName, setDisplayName] = useState(profile?.displayName || '');
   const [educationLevel, setEducationLevel] = useState(profile?.educationLevel || 'Universitas (S1)');
   const [university, setUniversity] = useState(profile?.university || '');
+  const [selectedSubjects, setSelectedSubjects] = useState(profile?.subjects || ['Umum']);
+  const [newSubject, setNewSubject] = useState('');
   const [weeklyGoalMinutes, setWeeklyGoalMinutes] = useState(profile?.weeklyGoalMinutes || 300);
   const [explanationStyle, setExplanationStyle] = useState(profile?.explanationStyle || 'Lengkap & Akademis');
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -37,12 +39,53 @@ export function SettingsPage() {
   const [confirmResetModal, setConfirmResetModal] = useState(false);
   const [checkingAi, setCheckingAi] = useState(false);
 
+  const educationLevels = [
+    'SMA / SMK / MA',
+    'Universitas (D3 / D4)',
+    'Universitas (S1)',
+    'Pascasarjana (S2 / S3)',
+    'Pembelajar Mandiri / Profesional'
+  ];
+
+  const explanationStyles = [
+    { value: 'Sederhana & Mudah Dipahami', desc: 'Penjelasan analogis tanpa jargon berbelit-belit.' },
+    { value: 'Lengkap & Akademis', desc: 'Mendalam, formal, lengkap dengan teori & literatur.' },
+    { value: 'Langkah demi Langkah', desc: 'Metodologis, poin per poin, sangat sistematis.' },
+    { value: 'Berdasarkan Contoh Nyata', desc: 'Banyak studi kasus industri dan kehidupan sehari-hari.' }
+  ];
+
+  // Sync state whenever profile updates
+  useEffect(() => {
+    if (profile) {
+      setDisplayName(profile.displayName || '');
+      setEducationLevel(profile.educationLevel || 'Universitas (S1)');
+      setUniversity(profile.university || '');
+      setSelectedSubjects(profile.subjects && profile.subjects.length > 0 ? profile.subjects : ['Umum']);
+      setWeeklyGoalMinutes(profile.weeklyGoalMinutes || 300);
+      setExplanationStyle(profile.explanationStyle || 'Lengkap & Akademis');
+    }
+  }, [profile]);
+
+  const handleAddSubject = (e) => {
+    e.preventDefault();
+    if (!newSubject.trim()) return;
+    if (!selectedSubjects.includes(newSubject.trim())) {
+      setSelectedSubjects(prev => [...prev, newSubject.trim()]);
+    }
+    setNewSubject('');
+  };
+
+  const handleRemoveSubject = (subj) => {
+    setSelectedSubjects(prev => prev.filter(s => s !== subj));
+  };
+
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     await updateProfile({
       displayName,
       educationLevel,
       university,
+      subjects: selectedSubjects.length > 0 ? selectedSubjects : ['Umum'],
       weeklyGoalMinutes: Number(weeklyGoalMinutes),
       explanationStyle,
     });
@@ -136,11 +179,9 @@ export function SettingsPage() {
               value={educationLevel}
               onChange={(e) => setEducationLevel(e.target.value)}
             >
-              <option value="SMA / SMK / MA">SMA / SMK / MA</option>
-              <option value="Universitas (D3 / D4)">Universitas (D3 / D4)</option>
-              <option value="Universitas (S1)">Universitas (S1)</option>
-              <option value="Pascasarjana (S2 / S3)">Pascasarjana (S2 / S3)</option>
-              <option value="Pembelajar Mandiri">Pembelajar Mandiri</option>
+              {educationLevels.map(lvl => (
+                <option key={lvl} value={lvl}>{lvl}</option>
+              ))}
             </Select>
 
             <Input
@@ -158,20 +199,77 @@ export function SettingsPage() {
               <option value={120}>2 Jam / Minggu (Santai)</option>
               <option value={240}>4 Jam / Minggu (Sedang)</option>
               <option value={300}>5 Jam / Minggu (Fokus)</option>
+              <option value={360}>6 Jam / Minggu (Fokus Tinggi)</option>
               <option value={420}>7 Jam / Minggu (Intensif)</option>
+              <option value={600}>10 Jam / Minggu (Sangat Intensif)</option>
             </Select>
           </div>
 
-          <Select
-            label="Gaya Penjelasan AI Tutor"
-            value={explanationStyle}
-            onChange={(e) => setExplanationStyle(e.target.value)}
-          >
-            <option value="Lengkap & Akademis">Lengkap & Akademis (Mendalam dengan teori & literatur)</option>
-            <option value="Sederhana & Mudah Dipahami">Sederhana & Mudah Dipahami (Analogi lugas tanpa jargon rumit)</option>
-            <option value="Langkah demi Langkah">Langkah demi Langkah (Sistematis & prosedural)</option>
-            <option value="Berdasarkan Contoh Nyata">Berdasarkan Contoh Nyata (Banyak studi kasus industri)</option>
-          </Select>
+          {/* Subjects List & Editor */}
+          <div className="space-y-2 pt-2 border-t border-slate-100">
+            <label className="block text-xs font-semibold text-slate-700 tracking-wide uppercase">
+              Mata Kuliah / Subjek yang Sedang Dipelajari
+            </label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {selectedSubjects.map(subj => (
+                <span
+                  key={subj}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200 shadow-subtle"
+                >
+                  <span>{subj}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSubject(subj)}
+                    className="text-brand-400 hover:text-brand-700 font-bold ml-1 text-sm leading-none"
+                    title={`Hapus ${subj}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newSubject}
+                onChange={(e) => setNewSubject(e.target.value)}
+                placeholder="Ketik mata kuliah baru (misal: Kecerdasan Buatan, Biokimia)..."
+                className="flex-1 rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddSubject(e);
+                  }
+                }}
+              />
+              <Button type="button" size="sm" variant="outline" onClick={handleAddSubject}>
+                Tambah
+              </Button>
+            </div>
+          </div>
+
+          {/* Explanation Style Cards */}
+          <div className="space-y-2 pt-2 border-t border-slate-100">
+            <label className="block text-xs font-semibold text-slate-700 tracking-wide uppercase">
+              Gaya Penjelasan AI Tutor Favorit
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {explanationStyles.map(style => (
+                <div
+                  key={style.value}
+                  onClick={() => setExplanationStyle(style.value)}
+                  className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
+                    explanationStyle === style.value
+                      ? 'border-brand-500 bg-brand-50/50 shadow-sm ring-1 ring-brand-500'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="font-semibold text-xs text-slate-900">{style.value}</div>
+                  <div className="text-[11px] text-slate-500 mt-1">{style.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <div className="flex justify-end pt-2">
             <Button type="submit" variant="primary" size="md" icon={savedSuccess ? Check : undefined}>

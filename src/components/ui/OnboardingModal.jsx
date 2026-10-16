@@ -13,10 +13,22 @@ export function OnboardingModal({ isOpen, onClose }) {
   const [displayName, setDisplayName] = useState(profile?.displayName || 'Pelajar Cerdas');
   const [educationLevel, setEducationLevel] = useState(profile?.educationLevel || 'Universitas (S1)');
   const [university, setUniversity] = useState(profile?.university || '');
-  const [selectedSubjects, setSelectedSubjects] = useState(profile?.subjects || ['Ilmu Komputer', 'Ekonomi Makro']);
+  const [selectedSubjects, setSelectedSubjects] = useState(profile?.subjects || ['Umum']);
   const [weeklyGoalMinutes, setWeeklyGoalMinutes] = useState(profile?.weeklyGoalMinutes || 300);
   const [explanationStyle, setExplanationStyle] = useState(profile?.explanationStyle || 'Lengkap & Akademis');
   const [newSubject, setNewSubject] = useState('');
+
+  // Sync state whenever profile or modal open state changes
+  React.useEffect(() => {
+    if (profile) {
+      setDisplayName(profile.displayName || 'Pelajar Cerdas');
+      setEducationLevel(profile.educationLevel || 'Universitas (S1)');
+      setUniversity(profile.university || '');
+      setSelectedSubjects(profile.subjects && profile.subjects.length > 0 ? profile.subjects : ['Umum']);
+      setWeeklyGoalMinutes(profile.weeklyGoalMinutes || 300);
+      setExplanationStyle(profile.explanationStyle || 'Lengkap & Akademis');
+    }
+  }, [profile, isOpen]);
 
   const educationLevels = [
     'SMA / SMK / MA',
