@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { db, seedInitialDataIfEmpty } from '../services/db.js';
+import { db, seedInitialDataIfEmpty, clearAllData } from '../services/db.js';
 import { calculateLevel, awardXp as serviceAwardXp } from '../services/gamificationService.js';
 import { checkBackendHealth } from '../services/aiService.js';
 
@@ -89,12 +89,17 @@ export function AuthProvider({ children }) {
     return result;
   };
 
-  const resetAllData = async () => {
-    await db.delete();
-    await db.open();
-    await seedInitialDataIfEmpty();
+  const resetToEmpty = async () => {
+    await clearAllData(true);
     await refreshProfile();
   };
+
+  const resetToDemo = async () => {
+    await clearAllData(false);
+    await refreshProfile();
+  };
+
+  const resetAllData = resetToDemo;
 
   const levelInfo = profile ? calculateLevel(profile.xp || 0) : calculateLevel(0);
 
@@ -109,6 +114,8 @@ export function AuthProvider({ children }) {
         updateProfile,
         awardXp: handleAwardXp,
         resetAllData,
+        resetToEmpty,
+        resetToDemo,
         onboardingOpen,
         setOnboardingOpen
       }}

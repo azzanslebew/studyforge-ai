@@ -20,9 +20,12 @@ export class StudyForgeDB extends Dexie {
 export const db = new StudyForgeDB();
 
 // Initial Seed Data for immediate rich out-of-the-box experience
-export async function seedInitialDataIfEmpty() {
+export async function seedInitialDataIfEmpty(force = false) {
+  if (!force && localStorage.getItem('studyforge_empty_mode') === 'true') {
+    return;
+  }
   const lessonCount = await db.lessons.count();
-  if (lessonCount > 0) return;
+  if (lessonCount > 0 && !force) return;
 
   console.log('Seeding initial StudyForge AI data for Indonesian university students...');
 
@@ -513,4 +516,38 @@ export async function seedInitialDataIfEmpty() {
   ]);
 
   console.log('StudyForge AI initial data seeded successfully.');
+}
+
+/**
+ * Reset data: can be completely empty (emptyMode = true) or reloaded with demo data (emptyMode = false)
+ */
+export async function clearAllData(emptyMode = true) {
+  await db.lessons.clear();
+  await db.folders.clear();
+  await db.flashcards.clear();
+  await db.quizzes.clear();
+  await db.quizAttempts.clear();
+  await db.plannerSessions.clear();
+  await db.achievements.clear();
+
+  if (emptyMode) {
+    localStorage.setItem('studyforge_empty_mode', 'true');
+    await db.userProfile.put({
+      id: 'current_user',
+      displayName: 'Pelajar Baru',
+      educationLevel: 'Universitas (S1)',
+      university: '',
+      subjects: ['Umum'],
+      weeklyGoalMinutes: 240,
+      explanationStyle: 'Lengkap & Akademis',
+      xp: 0,
+      level: 1,
+      streak: 1,
+      lastStudyDate: new Date().toISOString().split('T')[0],
+      createdAt: new Date().toISOString()
+    });
+  } else {
+    localStorage.removeItem('studyforge_empty_mode');
+    await seedInitialDataIfEmpty(true);
+  }
 }

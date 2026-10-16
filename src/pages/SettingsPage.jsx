@@ -11,7 +11,8 @@ import {
   AlertTriangle,
   ExternalLink,
   ShieldCheck,
-  Check
+  Check,
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -22,7 +23,7 @@ import { Input, Select } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 
 export function SettingsPage() {
-  const { profile, updateProfile, aiStatus, checkAI, resetAllData } = useAuth();
+  const { profile, updateProfile, aiStatus, checkAI, resetToEmpty, resetToDemo } = useAuth();
   const { showToast } = useToast();
 
   const [displayName, setDisplayName] = useState(profile?.displayName || '');
@@ -32,6 +33,7 @@ export function SettingsPage() {
   const [explanationStyle, setExplanationStyle] = useState(profile?.explanationStyle || 'Lengkap & Akademis');
   const [savedSuccess, setSavedSuccess] = useState(false);
 
+  const [confirmEmptyModal, setConfirmEmptyModal] = useState(false);
   const [confirmResetModal, setConfirmResetModal] = useState(false);
   const [checkingAi, setCheckingAi] = useState(false);
 
@@ -56,10 +58,16 @@ export function SettingsPage() {
     showToast('Pemeriksaan koneksi AI selesai.', 'info');
   };
 
-  const handleResetData = async () => {
-    await resetAllData();
+  const handleEmptyData = async () => {
+    await resetToEmpty();
+    setConfirmEmptyModal(false);
+    showToast('Seluruh data berhasil dikosongkan. Anda dapat mulai belajar dari awal!', 'success');
+  };
+
+  const handleReloadDemo = async () => {
+    await resetToDemo();
     setConfirmResetModal(false);
-    showToast('Basis data lokal berhasil direset ke dataset awal.', 'success');
+    showToast('Data kurikulum demo berhasil dimuat ulang.', 'success');
   };
 
   const handleExportBackup = async () => {
@@ -244,33 +252,69 @@ export function SettingsPage() {
         </p>
 
         <div className="flex flex-wrap gap-3 pt-2">
-          <Button variant="outline" size="sm" icon={Download} onClick={handleExportBackup}>
-            Unduh Cadangan JSON
+          <Button variant="danger" size="sm" icon={Trash2} onClick={() => setConfirmEmptyModal(true)}>
+            Kosongkan Total (Mulai dari Nol)
           </Button>
 
-          <Button variant="danger" size="sm" icon={RotateCcw} onClick={() => setConfirmResetModal(true)}>
-            Reset ke Data Awal Demo
+          <Button variant="outline" size="sm" icon={RotateCcw} onClick={() => setConfirmResetModal(true)}>
+            Muat Ulang Contoh Data Demo
+          </Button>
+
+          <Button variant="outline" size="sm" icon={Download} onClick={handleExportBackup}>
+            Unduh Cadangan JSON
           </Button>
         </div>
       </Card>
 
-      {/* Reset Confirmation Modal */}
+      {/* Modal 1: Confirm Completely Empty */}
       <Modal
-        isOpen={confirmResetModal}
-        onClose={() => setConfirmResetModal(false)}
-        title="Reset Seluruh Data Lokal?"
+        isOpen={confirmEmptyModal}
+        onClose={() => setConfirmEmptyModal(false)}
+        title="Kosongkan Semua Data (Mulai dari Nol)?"
         maxWidth="max-w-md"
       >
         <div className="space-y-4 text-sm">
-          <p className="text-slate-600">
-            Tindakan ini akan menghapus materi kustom dan mengembalikan basis data ke contoh awal kurikulum StudyForge AI.
+          <p className="text-slate-600 leading-relaxed">
+            Apakah Anda yakin ingin mengosongkan seluruh database?
+          </p>
+          <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs space-y-1">
+            <strong>Apa yang akan terjadi:</strong>
+            <ul className="list-disc list-inside space-y-0.5 mt-1">
+              <li>Semua materi, folder, dan catatan akan terhapus.</li>
+              <li>Semua kartu flashcard dan riwayat kuis akan terhapus.</li>
+              <li>Jadwal belajar dan analitik akan bersih 0.</li>
+              <li>Level direset ke Level 1 (0 XP, streak 1).</li>
+              <li>Data demo bawaan <strong>tidak akan dimuat lagi</strong>.</li>
+            </ul>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setConfirmEmptyModal(false)}>
+              Batal
+            </Button>
+            <Button variant="danger" size="sm" onClick={handleEmptyData}>
+              Ya, Kosongkan Semuanya
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal 2: Confirm Reload Demo Data */}
+      <Modal
+        isOpen={confirmResetModal}
+        onClose={() => setConfirmResetModal(false)}
+        title="Muat Ulang Contoh Data Demo?"
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-4 text-sm">
+          <p className="text-slate-600 leading-relaxed">
+            Tindakan ini akan mengatur ulang database dan memuat kembali contoh materi perkuliahan Indonesia (Struktur Data BST, Biologi Molekuler DNA, dan Ekonomi Makro).
           </p>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" size="sm" onClick={() => setConfirmResetModal(false)}>
               Batal
             </Button>
-            <Button variant="danger" size="sm" onClick={handleResetData}>
-              Ya, Reset Data
+            <Button variant="primary" size="sm" onClick={handleReloadDemo}>
+              Ya, Muat Ulang Demo
             </Button>
           </div>
         </div>
